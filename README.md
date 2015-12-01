@@ -4,7 +4,7 @@ This application was created with Processing and visually represents my SMS logs
 
 I left out the file SMS2.csv because it contains my SMS history which I would rather not make public.
 
-If you'd like to test this code out yourself and you have an Android phone, download the app "SMS Backup and Restore"
+If you'd like to test this code out yourself and you have an Android phone, download the app "SMS Backup & Restore"
 from the Play Store and save your texts to an XML file. Then open the XML file in Excel, and it should give you some sort
 of warning message. One of the options leads to a spreadsheet with a long column down the middle containing messages in
 groups of 5 categories. Every 1/5 row will say either "Sent" or "Received", every 2nd row will tell you the contact's phone
