@@ -1,4 +1,29 @@
+import processing.sound.*;
+
 // TextViz by Daniel James
+
+TriOsc triOsc;
+Env env; 
+
+// Times and levels for the ASR envelope
+float attackTime = 0.001;
+float sustainTime = 0.004;
+float sustainLevel = 0.2;
+float releaseTime = 0.2;
+
+// This is an octave in MIDI notes.
+int[] midiSequence = { 
+  60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72
+}; 
+
+// Set the duration between the notes
+int duration = 200;
+// Set the note trigger
+int trigger = 0; 
+
+// An index to count up the notes
+int note = 0; 
+
 
 // Initialize variables
 Table data;
@@ -36,8 +61,17 @@ int maxMessageSize;
 void setup() {
   size(400, 700);
   smooth();
+  
+
+  // Create triangle wave and envelope 
+  triOsc = new TriOsc(this);
+  env  = new Env(this);
+  
+  
+  
 
   data = loadTable("SMS2.csv", "header");
+
 
   rowCount = data.getRowCount();
 
@@ -91,8 +125,44 @@ void setup() {
 }
 
 
+
+// This function calculates the respective frequency of a MIDI note
+float midiToFreq(int note) {
+  return (pow(2, ((note-69)/12.0)))*440;
+}
+
+
+
 void draw() {
 
+    // If value of trigger is equal to the computer clock and if not all 
+  // notes have been played yet, the next note gets triggered.
+  if ((millis() > trigger) && (note<midiSequence.length)) {
+
+    // midiToFreq transforms the MIDI value into a frequency in Hz which we use 
+    //to control the triangle oscillator with an amplitute of 0.8
+    triOsc.play(midiToFreq(midiSequence[note]), 0.8);
+
+    // The envelope gets triggered with the oscillator as input and the times and 
+    // levels we defined earlier
+    env.play(triOsc, attackTime, sustainTime, sustainLevel, releaseTime);
+
+    // Create the new trigger according to predefined durations and speed
+    trigger = millis() + duration;
+
+    // Advance by one note in the midiSequence;
+    note++; 
+
+    // Loop the sequence
+    if (note == 12) {
+      note = 0;
+    }
+  }
+
+  
+  
+  
+  
   noStroke();
   // Draw the frame
   colourFrame(contactNameA[currentMessage]);
@@ -254,7 +324,7 @@ void colourBackground(int hour) {
 
 
 
-int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, other;
+int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, punctuation, other;
 int zero, one, two, three, four, five, six, seven, eight, nine;
 
 
@@ -289,6 +359,8 @@ void messageAnalysis(String text) {
   x = 0;
   y = 0;
   z = 0;
+
+  punctuation = 0;
 
   zero = 0;
   one = 0;
@@ -340,8 +412,68 @@ void messageAnalysis(String text) {
     else if (text.charAt(i) == '7') seven++;
     else if (text.charAt(i) == '8') eight++;
     else if (text.charAt(i) == '9') nine++;
+    else if (text.charAt(i) == '.' || text.charAt(i) == ',' || text.charAt(i) == ' ') punctuation++;
     else other++;
   }
+
+  int mostFrequentCount = 0;
+  String mostFrequentLetter = "";
+
+  //println("a: " + a);  println("b: " + b);  println("c: " + c);  println("d: " + d);  println("e: " + e);  println("f: " + f);
+  //println("g: " + g);  println("h: " + h);  println("i: " + i);  println("j: " + j);  println("k: " + k);  println("l: " + l);
+  //println("m: " + m);  println("n: " + n);  println("o: " + o);  println("p: " + p);  println("q: " + q);  println("r: " + r);
+  //println("s: " + s);  println("t: " + t);  println("u: " + u);  println("v: " + v);  println("w: " + w);  println("x: " + x);
+  //println("y: " + y);  println("z: " + z);  println("one: " + one);  println("two: " + two);  println("three: " + three);
+  //println("four: " + four);  println("five: " + five);  println("six: " + six);  println("seven: " + seven);  println("eight: " + eight);
+  //println("nine: " + nine);  println("zero: " + zero);  println("other: " + other);  println("punctuation: " + punctuation);
+
+
+  if (a > mostFrequentCount) { mostFrequentCount = a; mostFrequentLetter = "a"; }
+  if (b > mostFrequentCount) { mostFrequentCount = b; mostFrequentLetter = "b"; }
+  if (c > mostFrequentCount) { mostFrequentCount = c; mostFrequentLetter = "c"; }
+  if (d > mostFrequentCount) { mostFrequentCount = d; mostFrequentLetter = "d"; }
+  if (e > mostFrequentCount) { mostFrequentCount = e; mostFrequentLetter = "e"; }
+  if (f > mostFrequentCount) { mostFrequentCount = f; mostFrequentLetter = "f"; }
+  if (g > mostFrequentCount) { mostFrequentCount = g; mostFrequentLetter = "g"; }
+  if (h > mostFrequentCount) { mostFrequentCount = h; mostFrequentLetter = "h"; }
+  if (i > mostFrequentCount) { mostFrequentCount = i; mostFrequentLetter = "i"; }
+  if (j > mostFrequentCount) { mostFrequentCount = j; mostFrequentLetter = "j"; }
+  if (k > mostFrequentCount) { mostFrequentCount = k; mostFrequentLetter = "k"; }
+  if (l > mostFrequentCount) { mostFrequentCount = l; mostFrequentLetter = "l"; }
+  if (m > mostFrequentCount) { mostFrequentCount = m; mostFrequentLetter = "m"; }
+  if (n > mostFrequentCount) { mostFrequentCount = n; mostFrequentLetter = "n"; }
+  if (o > mostFrequentCount) { mostFrequentCount = o; mostFrequentLetter = "o"; }
+  if (p > mostFrequentCount) { mostFrequentCount = p; mostFrequentLetter = "p"; }
+  if (q > mostFrequentCount) { mostFrequentCount = q; mostFrequentLetter = "q"; }
+  if (r > mostFrequentCount) { mostFrequentCount = r; mostFrequentLetter = "r"; }
+  if (s > mostFrequentCount) { mostFrequentCount = s; mostFrequentLetter = "s"; }
+  if (t > mostFrequentCount) { mostFrequentCount = t; mostFrequentLetter = "t"; }
+  if (u > mostFrequentCount) { mostFrequentCount = u; mostFrequentLetter = "u"; }
+  if (v > mostFrequentCount) { mostFrequentCount = v; mostFrequentLetter = "v"; }
+  if (w > mostFrequentCount) { mostFrequentCount = w; mostFrequentLetter = "w"; }
+  if (x > mostFrequentCount) { mostFrequentCount = x; mostFrequentLetter = "x"; }
+  if (y > mostFrequentCount) { mostFrequentCount = y; mostFrequentLetter = "y"; }
+  if (z > mostFrequentCount) { mostFrequentCount = z; mostFrequentLetter = "z"; }
+
+  //if (one > mostFrequentCount) { mostFrequentCount = one; }
+  //if (two > mostFrequentCount) { mostFrequentCount = two; }
+  //if (three > mostFrequentCount) { mostFrequentCount = three; }
+  //if (four > mostFrequentCount) { mostFrequentCount = four; }
+  //if (five > mostFrequentCount) { mostFrequentCount = five; }
+  //if (six > mostFrequentCount) { mostFrequentCount = six; }
+  //if (seven > mostFrequentCount) { mostFrequentCount = seven; }
+  //if (eight > mostFrequentCount) { mostFrequentCount = eight; }
+  //if (nine > mostFrequentCount) { mostFrequentCount = nine; }
+  //if (zero > mostFrequentCount) { mostFrequentCount = zero; }
+  //if (other > mostFrequentCount) { mostFrequentCount = other; }
+  //if (punctuation > mostFrequentCount) { mostFrequentCount = punctuation; }
+
+  println("MFL ====== ");
+  println(mostFrequentLetter + ": " + mostFrequentCount);
+  println(" ");
+
+
+
 
   if (receivedOrSentA[currentMessage].matches("Sent")) {
 
