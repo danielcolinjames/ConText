@@ -13,3 +13,5 @@ the message's contents.
 
 Carriage returns in message contents will break the code, so they need to be removed from the spreadsheet before the spreadsheet
 is read into Processing.
+
+Once everything is in the right format, save the file as a .csv and make sure it's in the /data folder of the Processing sketch.
