@@ -1,29 +1,19 @@
 import processing.sound.*;
 
-// TextViz by Daniel James
+// -------------------------------------------------- //
+// -------------------------------------------------- //
+//                   Daniel James                     //
+// -------------------------------------------------- //
+// -------------------------------------------------- //
 
 TriOsc triOsc;
 Env env; 
 
-// Times and levels for the ASR envelope
-float attackTime = 0.001;
-float sustainTime = 0.004;
-float sustainLevel = 0.2;
-float releaseTime = 0.2;
+// Used for visual and tonal generation
+int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z;
 
-// This is an octave in MIDI notes.
-int[] midiSequence = { 
-  60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72
-}; 
-
-// Set the duration between the notes
-int duration = 200;
-// Set the note trigger
-int trigger = 0; 
-
-// An index to count up the notes
-int note = 0; 
-
+int mostFrequentCount = 0;
+String mostFrequentLetter = "";
 
 // Initialize variables
 Table data;
@@ -41,38 +31,32 @@ int frameB;
 int xMod = 10;
 int yMod = 10;
 
-int currentMessage = 1;
+int currentMessage = 0;
 
 // Arrays
-String[] receivedOrSentA;
-String[] phoneNumberA;
-String[] contactNameA;
-int[] hourA;
-String[] messageContentA;
+String[] receivedOrSent;
+String[] phoneNumber;
+String[] contactName;
+int[] hour;
+String[] messageContent;
 
-// Temporary variables for setup()
-String receivedOrSent;
-String phoneNumber;
-String contactName;
-int hour;
-String messageContent;
-int maxMessageSize;
+// -------------------------------------------------- //
+//                        SETUP                       //
+// -------------------------------------------------- //
 
 void setup() {
   size(400, 700);
   smooth();
-  
+  noStroke();
 
-  // Create triangle wave and envelope 
+  // Create triangle wave and envelope for note generation
   triOsc = new TriOsc(this);
   env  = new Env(this);
-  
-  
-  
 
+  // Load the texts
   data = loadTable("SMS2.csv", "header");
 
-
+  // Get a row count
   rowCount = data.getRowCount();
 
   // The spreadsheet is set up in a long column with groups of 5
@@ -81,129 +65,84 @@ void setup() {
   // 3 - Contact name
   // 4 - Timestamp
   // 5 - Message content
-  receivedOrSentA  = new String[(rowCount / 5)];
-  phoneNumberA = new String[(rowCount / 5)];
-  contactNameA = new String[(rowCount / 5)];
-  hourA = new int[(rowCount / 5)];
-  messageContentA = new String[(rowCount / 5)];
 
-  maxMessageSize = 0;
+  receivedOrSent  = new String[(rowCount / 5)];
+  phoneNumber = new String[(rowCount / 5)];
+  contactName = new String[(rowCount / 5)];
+  hour = new int[(rowCount / 5)];
+  messageContent = new String[(rowCount / 5)];
 
-  // Iterate through the .csv file and add the data into arrays so that we can access them from draw() without having to iterate every time
+  // Iterate through the .csv file and add the data into arrays so that 
+  // we can access them from draw() without having to iterate every time
   for (int i = 0; i < rowCount; i++) {
     if (i % 5 == 0) {
 
-      // Received or Sent
-      receivedOrSent = data.getRow(i).getString("message");
+      // "Received" or "Sent"
+      receivedOrSent[i / 5] = data.getRow(i).getString("message");
 
       // Phone number
-      phoneNumber = data.getRow(i + 1).getString("message");
+      phoneNumber[i / 5] = data.getRow(i + 1).getString("message");
 
       // Contact name
-      contactName = data.getRow(i + 2).getString("message");
+      contactName[i / 5] = data.getRow(i + 2).getString("message");
 
       // Hour of day
       String[] timeStampSplit = splitTokens(data.getRow(i + 3).getString("message"), " ");
       String[] timeSplit = splitTokens(timeStampSplit[1], ":");
-      hour = parseInt(timeSplit[0]);
+      hour[i / 5] = parseInt(timeSplit[0]);
 
       // Message content
-      messageContent = data.getRow(i + 4).getString("message");
-
-      // Populate arrays
-      receivedOrSentA[i/5] = receivedOrSent;
-      phoneNumberA[i/5] = phoneNumber;
-      contactNameA[i/5] = contactName;
-      hourA[i/5] = hour;
-      messageContentA[i/5] = messageContent;
-
-      if (messageContent.length() > maxMessageSize) maxMessageSize = messageContent.length();
-
-      //println(receivedOrSent + ": " + contactName + "(" + phoneNumber + ") at " + hour + "h: " + messageContent);
+      messageContent[i / 5] = data.getRow(i + 4).getString("message");
     }
   }
 }
 
-
-
-// This function calculates the respective frequency of a MIDI note
-float midiToFreq(int note) {
-  return (pow(2, ((note-69)/12.0)))*440;
-}
-
-
+// -------------------------------------------------- //
+//                        DRAW                        //
+// -------------------------------------------------- //
 
 void draw() {
-
-    // If value of trigger is equal to the computer clock and if not all 
-  // notes have been played yet, the next note gets triggered.
-  if ((millis() > trigger) && (note<midiSequence.length)) {
-
-    // midiToFreq transforms the MIDI value into a frequency in Hz which we use 
-    //to control the triangle oscillator with an amplitute of 0.8
-    triOsc.play(midiToFreq(midiSequence[note]), 0.8);
-
-    // The envelope gets triggered with the oscillator as input and the times and 
-    // levels we defined earlier
-    env.play(triOsc, attackTime, sustainTime, sustainLevel, releaseTime);
-
-    // Create the new trigger according to predefined durations and speed
-    trigger = millis() + duration;
-
-    // Advance by one note in the midiSequence;
-    note++; 
-
-    // Loop the sequence
-    if (note == 12) {
-      note = 0;
-    }
-  }
-
   
-  
-  
-  
-  noStroke();
   // Draw the frame
-  colourFrame(contactNameA[currentMessage]);
+  colourFrame(contactName[currentMessage]);
 
   // Draw the background colour
-  colourBackground(hourA[currentMessage]);
+  colourBackground(hour[currentMessage]);
 
   // Draw the boxes
-  messageAnalysis(messageContentA[currentMessage]);
+  drawMessageBoxes(messageContent[currentMessage]);
 
-  //fill(255);
-  //textAlign(CENTER);
-  //text("TEST", width/2, height/2);
+  // Generate a note
+  createTones(messageContent[currentMessage]);
 
+  // Wait for the number of milliseconds that the current message is long in characters
+  delay(messageContent[currentMessage].length());
+
+  // Go to the next message
   currentMessage++;
 
-  // Reset when the last message is reached
+  // Reset and wait 10 seconds when the last message is reached
   if (currentMessage == (rowCount / 5)) {
-
-    currentMessage = 1;
-
-    // Draw the frame
-    colourFrame(contactNameA[currentMessage]);
-
-    // Draw the background colour
-    colourBackground(hourA[currentMessage]);
-    //textMode(CENTER);
-    fill(255);
-    textAlign(CENTER);
-    textSize(25);
-    text("RESTARTING", width/2, height/2);
-    delay(100000000);
+    currentMessage = 0;
+    println("------------------RESTARTING------------------");
+    println("------------------RESTARTING------------------");
+    println("------------------RESTARTING------------------");
+    println("------------------RESTARTING------------------");
+    println("------------------RESTARTING------------------");
+    println("------------------RESTARTING------------------");
+    println("------------------RESTARTING------------------");
+    println("------------------RESTARTING------------------");
+    println("------------------RESTARTING------------------");
+    delay(10000);
   }
-
-  //delay(100);
 }
 
-
-
+// ------------------------------------------------------------------------------------//
+//   This function picks a tint to use in the visual based on the contact's initials   //
+// ------------------------------------------------------------------------------------//
 
 void colourFrame(String contact) {
+
   // Split the contact's name into first and last name
   String[] names = splitTokens(contact);
 
@@ -225,8 +164,8 @@ void colourFrame(String contact) {
       firstInitial -= 65;
       lastInitial -= 65;
       // map them to a value from 0 to 255
-      firstInitial *= (255. / 25.);
-      lastInitial *= (255. / 25.);
+      firstInitial *= (255.0 / 25.0);
+      lastInitial *= (255.0 / 25.0);
     }
 
     // Assign the first initial (A - Z) a number from 0 - 255
@@ -235,8 +174,8 @@ void colourFrame(String contact) {
       firstInitial -= 97;
       lastInitial -= 97;
       // map them to a value from 0 to 255
-      firstInitial *= (255. / 25.);
-      lastInitial *= (255. / 25.);
+      firstInitial *= (255.0 / 25.0);
+      lastInitial *= (255.0 / 25.0);
     } 
 
     // In case the contact's initials aren't found in a-z or A-Z
@@ -249,17 +188,18 @@ void colourFrame(String contact) {
     frameG = lastInitial;
     frameB = (firstInitial + lastInitial) / 2;
   }
+
+  // Draw the frame of the visual
   rectMode(CORNER);
   yMod = 10;
-  //stroke(frameR, frameG, frameB);
   fill(frameR, frameG, frameB);
   rect((-1), (-1), width + 1, height + 1);
 }
 
 
-
-
-
+// --------------------------------------------------------------------------------------//
+// This function colours the background of the visual based on when the message was sent //
+// --------------------------------------------------------------------------------------//
 
 void colourBackground(int hour) {
 
@@ -305,34 +245,152 @@ void colourBackground(int hour) {
     backgroundB = 102;
   }
 
-  // Draw the background
+  // Draw the background of the visual
   rectMode(CORNER);
   fill(backgroundR, backgroundG, backgroundB, 200);
   rect(0 + xMod, 0 + yMod, width - xMod * 2, height - yMod * 2);
 }
 
 
+// ----------------------------------------------------------------------------------------//
+// This function draws boxes to represent letter frequency in the sent or received message //
+// ----------------------------------------------------------------------------------------//
 
+void drawMessageBoxes(String text) {
 
+  letterFrequency(text);
 
+  // Draw sent messages
+  if (receivedOrSent[currentMessage].matches("Sent")) {
 
+    rectMode(CORNERS);
+    fill(frameR, frameG, frameB, 200);
+    int xVal = 18;
+    float xValPlus = 14;
+    int multiplier = 20;
 
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (a * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (b * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (c * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (d * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (e * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (f * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (g * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (h * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (i * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (j * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (k * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (l * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (m * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (n * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (o * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (p * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (q * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (r * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (s * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (t * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (u * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (v * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (w * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (x * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (y * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (z * multiplier));
+  }
 
+  // Draw received messages
+  else {
 
+    rectMode(CORNERS);
+    fill(frameR, frameG, frameB, 200);
+    int xVal = 18;
+    float xValPlus = 14;
+    int multiplier = 20;
 
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (a * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (b * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (c * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (d * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (e * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (f * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (g * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (h * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (i * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (j * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (k * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (l * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (m * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (n * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (o * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (p * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (q * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (r * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (s * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (t * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (u * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (v * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (w * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (x * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (y * multiplier)); 
+    xVal += xValPlus;
+    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (z * multiplier));
+  }
+}
 
+// ---------------------------------------------------------------------------------//
+//  This function calculates the most frequently used letter in the passed message  //
+// ---------------------------------------------------------------------------------//
 
+void letterFrequency (String text) {
 
-
-int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, punctuation, other;
-int zero, one, two, three, four, five, six, seven, eight, nine;
-
-
-void messageAnalysis(String text) {
-  //println(text);
-  //println(maxMessageSize);
-  //double maxHeight = maxMessageSize / (height / 2) ;
-  //println("maxHeight = " + maxHeight);
   a = 0;
   b = 0;
   c = 0;
@@ -360,21 +418,7 @@ void messageAnalysis(String text) {
   y = 0;
   z = 0;
 
-  punctuation = 0;
-
-  zero = 0;
-  one = 0;
-  two = 0;
-  three = 0;
-  four = 0;
-  five = 0;
-  six = 0;
-  seven = 0;
-  eight = 0;
-  nine = 0;
-
-  other = 0;
-
+  // Count how many times each letter is used per message
   for (int i = 0; i < text.length(); i++) {
     if (text.charAt(i) == 'a' || text.charAt(i) == 'A') a++;
     else if (text.charAt(i) == 'b' || text.charAt(i) == 'B') b++;
@@ -402,307 +446,189 @@ void messageAnalysis(String text) {
     else if (text.charAt(i) == 'x' || text.charAt(i) == 'X') x++;
     else if (text.charAt(i) == 'y' || text.charAt(i) == 'Y') y++;
     else if (text.charAt(i) == 'z' || text.charAt(i) == 'Z') z++;
-    else if (text.charAt(i) == '0') zero++;
-    else if (text.charAt(i) == '1') one++;
-    else if (text.charAt(i) == '2') two++;
-    else if (text.charAt(i) == '3') three++;
-    else if (text.charAt(i) == '4') four++;
-    else if (text.charAt(i) == '5') five++;
-    else if (text.charAt(i) == '6') six++;
-    else if (text.charAt(i) == '7') seven++;
-    else if (text.charAt(i) == '8') eight++;
-    else if (text.charAt(i) == '9') nine++;
-    else if (text.charAt(i) == '.' || text.charAt(i) == ',' || text.charAt(i) == ' ') punctuation++;
-    else other++;
   }
 
-  int mostFrequentCount = 0;
-  String mostFrequentLetter = "";
+  mostFrequentCount = 0;
+  mostFrequentLetter = "";
 
-  //println("a: " + a);  println("b: " + b);  println("c: " + c);  println("d: " + d);  println("e: " + e);  println("f: " + f);
-  //println("g: " + g);  println("h: " + h);  println("i: " + i);  println("j: " + j);  println("k: " + k);  println("l: " + l);
-  //println("m: " + m);  println("n: " + n);  println("o: " + o);  println("p: " + p);  println("q: " + q);  println("r: " + r);
-  //println("s: " + s);  println("t: " + t);  println("u: " + u);  println("v: " + v);  println("w: " + w);  println("x: " + x);
-  //println("y: " + y);  println("z: " + z);  println("one: " + one);  println("two: " + two);  println("three: " + three);
-  //println("four: " + four);  println("five: " + five);  println("six: " + six);  println("seven: " + seven);  println("eight: " + eight);
-  //println("nine: " + nine);  println("zero: " + zero);  println("other: " + other);  println("punctuation: " + punctuation);
+  // Figure out what the most frequently used letter is
+  if (a > mostFrequentCount) { 
+    mostFrequentCount = a; 
+    mostFrequentLetter = "a";
+  }
+  if (b > mostFrequentCount) { 
+    mostFrequentCount = b;
+    mostFrequentLetter = "b";
+  }
+  if (c > mostFrequentCount) { 
+    mostFrequentCount = c; 
+    mostFrequentLetter = "c";
+  }
+  if (d > mostFrequentCount) { 
+    mostFrequentCount = d; 
+    mostFrequentLetter = "d";
+  }
+  if (e > mostFrequentCount) { 
+    mostFrequentCount = e; 
+    mostFrequentLetter = "e";
+  }
+  if (f > mostFrequentCount) { 
+    mostFrequentCount = f; 
+    mostFrequentLetter = "f";
+  }
+  if (g > mostFrequentCount) { 
+    mostFrequentCount = g; 
+    mostFrequentLetter = "g";
+  }
+  if (h > mostFrequentCount) { 
+    mostFrequentCount = h; 
+    mostFrequentLetter = "h";
+  }
+  if (i > mostFrequentCount) { 
+    mostFrequentCount = i; 
+    mostFrequentLetter = "i";
+  }
+  if (j > mostFrequentCount) { 
+    mostFrequentCount = j; 
+    mostFrequentLetter = "j";
+  }
+  if (k > mostFrequentCount) { 
+    mostFrequentCount = k; 
+    mostFrequentLetter = "k";
+  }
+  if (l > mostFrequentCount) { 
+    mostFrequentCount = l; 
+    mostFrequentLetter = "l";
+  }
+  if (m > mostFrequentCount) { 
+    mostFrequentCount = m; 
+    mostFrequentLetter = "m";
+  }
+  if (n > mostFrequentCount) { 
+    mostFrequentCount = n; 
+    mostFrequentLetter = "n";
+  }
+  if (o > mostFrequentCount) { 
+    mostFrequentCount = o; 
+    mostFrequentLetter = "o";
+  }
+  if (p > mostFrequentCount) { 
+    mostFrequentCount = p; 
+    mostFrequentLetter = "p";
+  }
+  if (q > mostFrequentCount) { 
+    mostFrequentCount = q; 
+    mostFrequentLetter = "q";
+  }
+  if (r > mostFrequentCount) { 
+    mostFrequentCount = r; 
+    mostFrequentLetter = "r";
+  }
+  if (s > mostFrequentCount) { 
+    mostFrequentCount = s; 
+    mostFrequentLetter = "s";
+  }
+  if (t > mostFrequentCount) { 
+    mostFrequentCount = t; 
+    mostFrequentLetter = "t";
+  }
+  if (u > mostFrequentCount) { 
+    mostFrequentCount = u; 
+    mostFrequentLetter = "u";
+  }
+  if (v > mostFrequentCount) { 
+    mostFrequentCount = v; 
+    mostFrequentLetter = "v";
+  }
+  if (w > mostFrequentCount) { 
+    mostFrequentCount = w; 
+    mostFrequentLetter = "w";
+  }
+  if (x > mostFrequentCount) { 
+    mostFrequentCount = x; 
+    mostFrequentLetter = "x";
+  }
+  if (y > mostFrequentCount) { 
+    mostFrequentCount = y; 
+    mostFrequentLetter = "y";
+  }
+  if (z > mostFrequentCount) { 
+    mostFrequentCount = z; 
+    mostFrequentLetter = "z";
+  }
+}
 
+// ------------------------------------------------------------------------------------------------//
+//  This function generates a note based on the most frequently used letter in the passed message  //
+// ------------------------------------------------------------------------------------------------//
 
-  if (a > mostFrequentCount) { mostFrequentCount = a; mostFrequentLetter = "a"; }
-  if (b > mostFrequentCount) { mostFrequentCount = b; mostFrequentLetter = "b"; }
-  if (c > mostFrequentCount) { mostFrequentCount = c; mostFrequentLetter = "c"; }
-  if (d > mostFrequentCount) { mostFrequentCount = d; mostFrequentLetter = "d"; }
-  if (e > mostFrequentCount) { mostFrequentCount = e; mostFrequentLetter = "e"; }
-  if (f > mostFrequentCount) { mostFrequentCount = f; mostFrequentLetter = "f"; }
-  if (g > mostFrequentCount) { mostFrequentCount = g; mostFrequentLetter = "g"; }
-  if (h > mostFrequentCount) { mostFrequentCount = h; mostFrequentLetter = "h"; }
-  if (i > mostFrequentCount) { mostFrequentCount = i; mostFrequentLetter = "i"; }
-  if (j > mostFrequentCount) { mostFrequentCount = j; mostFrequentLetter = "j"; }
-  if (k > mostFrequentCount) { mostFrequentCount = k; mostFrequentLetter = "k"; }
-  if (l > mostFrequentCount) { mostFrequentCount = l; mostFrequentLetter = "l"; }
-  if (m > mostFrequentCount) { mostFrequentCount = m; mostFrequentLetter = "m"; }
-  if (n > mostFrequentCount) { mostFrequentCount = n; mostFrequentLetter = "n"; }
-  if (o > mostFrequentCount) { mostFrequentCount = o; mostFrequentLetter = "o"; }
-  if (p > mostFrequentCount) { mostFrequentCount = p; mostFrequentLetter = "p"; }
-  if (q > mostFrequentCount) { mostFrequentCount = q; mostFrequentLetter = "q"; }
-  if (r > mostFrequentCount) { mostFrequentCount = r; mostFrequentLetter = "r"; }
-  if (s > mostFrequentCount) { mostFrequentCount = s; mostFrequentLetter = "s"; }
-  if (t > mostFrequentCount) { mostFrequentCount = t; mostFrequentLetter = "t"; }
-  if (u > mostFrequentCount) { mostFrequentCount = u; mostFrequentLetter = "u"; }
-  if (v > mostFrequentCount) { mostFrequentCount = v; mostFrequentLetter = "v"; }
-  if (w > mostFrequentCount) { mostFrequentCount = w; mostFrequentLetter = "w"; }
-  if (x > mostFrequentCount) { mostFrequentCount = x; mostFrequentLetter = "x"; }
-  if (y > mostFrequentCount) { mostFrequentCount = y; mostFrequentLetter = "y"; }
-  if (z > mostFrequentCount) { mostFrequentCount = z; mostFrequentLetter = "z"; }
+void createTones(String text) {
 
-  //if (one > mostFrequentCount) { mostFrequentCount = one; }
-  //if (two > mostFrequentCount) { mostFrequentCount = two; }
-  //if (three > mostFrequentCount) { mostFrequentCount = three; }
-  //if (four > mostFrequentCount) { mostFrequentCount = four; }
-  //if (five > mostFrequentCount) { mostFrequentCount = five; }
-  //if (six > mostFrequentCount) { mostFrequentCount = six; }
-  //if (seven > mostFrequentCount) { mostFrequentCount = seven; }
-  //if (eight > mostFrequentCount) { mostFrequentCount = eight; }
-  //if (nine > mostFrequentCount) { mostFrequentCount = nine; }
-  //if (zero > mostFrequentCount) { mostFrequentCount = zero; }
-  //if (other > mostFrequentCount) { mostFrequentCount = other; }
-  //if (punctuation > mostFrequentCount) { mostFrequentCount = punctuation; }
+  // Set the attack, sustain, and release of the note
+  float attackTime = 0.01;
+  float sustainTime = 0.00001 * text.length();
+  float sustainLevel = 0.0008 * mostFrequentCount;
+  float releaseTime = 0.1;
 
-  println("MFL ====== ");
-  println(mostFrequentLetter + ": " + mostFrequentCount);
-  println(" ");
+  // Set which note to play
+  int noteToPlay = 0;
 
-
-
-
-  if (receivedOrSentA[currentMessage].matches("Sent")) {
-
-    rectMode(CORNERS);
-    fill(frameR, frameG, frameB, 200);
-    int xVal = 22;
-    float xValPlus = 13.5;
-    int multiplier = 20;
-
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (a * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (b * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (c * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (d * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (e * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (f * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (g * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (h * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (i * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (j * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (k * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (l * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (m * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (n * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (o * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (p * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (q * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (r * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (s * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (t * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (u * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (v * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (w * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (x * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (y * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (z * multiplier));
-    xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (other * multiplier));
-    xVal += xValPlus;
-
-    xVal = 22;
-    xValPlus = 25;
-    multiplier = 30;
-
-    fill(frameR, frameG, frameB, 180);
-
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (zero * multiplier));
-    xVal += 35;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (one * multiplier));
-    xVal += 35;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (two * multiplier));
-    xVal += 35;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (three * multiplier));
-    xVal += 35;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (four * multiplier));
-    xVal += 35;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (five * multiplier));
-    xVal += 35;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (six * multiplier));
-    xVal += 35;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (seven * multiplier));
-    xVal += 35;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (eight * multiplier));
-    xVal += 35;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (nine * multiplier));
+  if (mostFrequentLetter == "a") {
+    noteToPlay = 60;
+  } else if (mostFrequentLetter == "b") {
+    noteToPlay = 61;
+  } else if (mostFrequentLetter == "c") {
+    noteToPlay = 62;
+  } else if (mostFrequentLetter == "d") {
+    noteToPlay = 63;
+  } else if (mostFrequentLetter == "e") {
+    noteToPlay = 64;
+  } else if (mostFrequentLetter == "f") {
+    noteToPlay = 65;
+  } else if (mostFrequentLetter == "g") {
+    noteToPlay = 66;
+  } else if (mostFrequentLetter == "h") {
+    noteToPlay = 67;
+  } else if (mostFrequentLetter == "i") {
+    noteToPlay = 68;
+  } else if (mostFrequentLetter == "j") {
+    noteToPlay = 69;
+  } else if (mostFrequentLetter == "k") {
+    noteToPlay = 70;
+  } else if (mostFrequentLetter == "l") {
+    noteToPlay = 71;
+  } else if (mostFrequentLetter == "m") {
+    noteToPlay = 72;
+  } else if (mostFrequentLetter == "n") {
+    noteToPlay = 73;
+  } else if (mostFrequentLetter == "o") {
+    noteToPlay = 74;
+  } else if (mostFrequentLetter == "p") {
+    noteToPlay = 75;
+  } else if (mostFrequentLetter == "q") {
+    noteToPlay = 76;
+  } else if (mostFrequentLetter == "r") {
+    noteToPlay = 77;
+  } else if (mostFrequentLetter == "s") {
+    noteToPlay = 78;
+  } else if (mostFrequentLetter == "t") {
+    noteToPlay = 79;
+  } else if (mostFrequentLetter == "u") {
+    noteToPlay = 80;
+  } else if (mostFrequentLetter == "v") {
+    noteToPlay = 81;
+  } else if (mostFrequentLetter == "w") {
+    noteToPlay = 82;
+  } else if (mostFrequentLetter == "x") {
+    noteToPlay = 83;
+  } else if (mostFrequentLetter == "y") {
+    noteToPlay = 84;
+  } else if (mostFrequentLetter == "z") {
+    noteToPlay = 85;
   }
 
-  // Draw received messages
-  else {
-    rectMode(CORNERS);
-    fill(frameR, frameG, frameB, 200);
-    int xVal = 22;
-    float xValPlus = 13.5;
-    int multiplier = 20;
-
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (a * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (b * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (c * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (d * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (e * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (f * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (g * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (h * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (i * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (j * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (k * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (l * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (m * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (n * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (o * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (p * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (q * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (r * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (s * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (t * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (u * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (v * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (w * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (x * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (y * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (z * multiplier));
-    xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (other * multiplier));
-    xVal += xValPlus;
-
-    xVal = 22;
-    xValPlus = 25;
-    multiplier = 30;
-
-    fill(frameR, frameG, frameB, 180);
-
-    rect(xVal, yMod, xVal + xValPlus, yMod + (zero * multiplier));
-    xVal += xValPlus;
-    rect(xVal, yMod, xVal + xValPlus, yMod + (one * multiplier));
-    xVal += xValPlus;
-    rect(xVal, yMod, xVal + xValPlus, yMod + (two * multiplier));
-    xVal += xValPlus;
-    rect(xVal, yMod, xVal + xValPlus, yMod + (three * multiplier));
-    xVal += xValPlus;
-    rect(xVal, yMod, xVal + xValPlus, yMod + (four * multiplier));
-    xVal += xValPlus;
-    rect(xVal, yMod, xVal + xValPlus, yMod + (five * multiplier));
-    xVal += xValPlus;
-    rect(xVal, yMod, xVal + xValPlus, yMod + (six * multiplier));
-    xVal += xValPlus;
-    rect(xVal, yMod, xVal + xValPlus, yMod + (seven * multiplier));
-    xVal += xValPlus;
-    rect(xVal, yMod, xVal + xValPlus, yMod + (eight * multiplier));
-    xVal += xValPlus;
-    rect(xVal, yMod, xVal + xValPlus, yMod + (nine * multiplier));
-  }
-
-  int delayTime = text.length();
-
-  //// Shortest message
-  //if (text.length() < 5) {
-  //  delayTime = 10;
-  //}
-
-  //// Medium length message
-  //else if (text.length() >= 5 && text.length() <= 25) {
-  //  delayTime = 25;
-  //}
-
-  //// Long message
-  //else if (text.length() >= 26 && text.length() <= 50) {
-  //  delayTime = 50;
-  //} 
-
-  //// Longer message
-  //else if (text.length() >= 51 && text.length() <= 80) {
-  //  delayTime = 100;
-  //} 
-
-  //// Longest message
-  //else if (text.length() > 80) {
-  //  delayTime = 200;
-  //} 
-
-  //// Normalize weird numbers
-  //else {
-  //  delayTime = 25;
-  //}
-
-
-  //delay(delayTime);
-
-
-
-
-
-
-  //rectMode(CORNERS);
-  //fill(frameR, frameG, frameB);
-  //rect((width / 2), height, drawSize, drawSize);
-
-
-
-  //if (text.length() > maxLength) maxLength = text.length();
-
-
-  //println("Max length: " + maxLength);
+  // Play the note
+  float midiToFreq = (pow(2, ((noteToPlay - 69) / 12.0))) * 440;
+  triOsc.play(midiToFreq, (text.length() * 0.2));
+  env.play(triOsc, attackTime, sustainTime, sustainLevel, releaseTime);
 }
