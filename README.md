@@ -1,4 +1,4 @@
-# TextViz
+# ConText
 This application was created with Processing and visually and tonally represents my SMS logs from the past few months.
 
 I left out the file SMS2.csv because it contains my SMS history which I would rather not make public.
