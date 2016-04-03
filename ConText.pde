@@ -7,7 +7,7 @@ import processing.sound.*;
 // -------------------------------------------------- //
 
 TriOsc triOsc;
-Env env; 
+Env env;
 
 // Used for visual and tonal generation
 int a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z;
@@ -31,7 +31,18 @@ int frameB;
 int xMod = 10;
 int yMod = 10;
 
+int horizontalLength;
+int verticalLength;
+
+int horizontalStart;
+int verticalStart;
+
+int horizontalEnd;
+int verticalEnd;
+
 int currentMessage = 0;
+
+int maxFreq;
 
 // Arrays
 String[] receivedOrSent;
@@ -43,11 +54,19 @@ String[] messageContent;
 // -------------------------------------------------- //
 //                        SETUP                       //
 // -------------------------------------------------- //
-
 void setup() {
-  size(400, 700);
+  fullScreen();
   smooth();
   noStroke();
+  
+  horizontalLength = 400;
+  verticalLength = 700;
+  
+  horizontalStart = width/2 - (horizontalLength/2);
+  verticalStart = height/2 - (verticalLength/2);
+  
+  horizontalEnd = horizontalStart + horizontalLength;
+  verticalEnd = verticalStart + verticalLength;
 
   // Create triangle wave and envelope for note generation
   triOsc = new TriOsc(this);
@@ -100,15 +119,17 @@ void setup() {
 // -------------------------------------------------- //
 //                        DRAW                        //
 // -------------------------------------------------- //
-
 void draw() {
   
   // Draw the frame
   colourFrame(contactName[currentMessage]);
-
+  
+  // Draw the outer background
+  drawOuterBackground();
+  
   // Draw the background colour
   colourBackground(hour[currentMessage]);
-
+  
   // Draw the boxes
   drawMessageBoxes(messageContent[currentMessage]);
 
@@ -121,26 +142,29 @@ void draw() {
   // Go to the next message
   currentMessage++;
 
-  // Reset and wait 10 seconds when the last message is reached
+  // Reset and wait 5 seconds when the last message is reached
   if (currentMessage == (rowCount / 5)) {
     currentMessage = 0;
     println("------------------RESTARTING------------------");
-    println("------------------RESTARTING------------------");
-    println("------------------RESTARTING------------------");
-    println("------------------RESTARTING------------------");
-    println("------------------RESTARTING------------------");
-    println("------------------RESTARTING------------------");
-    println("------------------RESTARTING------------------");
-    println("------------------RESTARTING------------------");
-    println("------------------RESTARTING------------------");
-    delay(10000);
+    delay(5000);
   }
+}
+
+// ------------------------------------------------------------------------------------//
+//             This function draws the outer background for the visualization          //
+// ------------------------------------------------------------------------------------//
+
+void drawOuterBackground() {
+  fill(0, 0, 0, 20);
+  rect(0, 0, width, height);
+  
+  fill(backgroundR, backgroundG, backgroundB, 21);
+  rect(0, 0, width, height);
 }
 
 // ------------------------------------------------------------------------------------//
 //   This function picks a tint to use in the visual based on the contact's initials   //
 // ------------------------------------------------------------------------------------//
-
 void colourFrame(String contact) {
 
   // Split the contact's name into first and last name
@@ -157,7 +181,7 @@ void colourFrame(String contact) {
   else {
     int firstInitial = names[0].charAt(0);
     int lastInitial = names[1].charAt(0);
-
+    
     // Assign the first initial (a - z) a number from 0 - 255
     if (firstInitial >= 65 && firstInitial <= 90 && lastInitial >= 65 && lastInitial <= 90) {
       // turn them into numbers from 0 to 25
@@ -167,7 +191,7 @@ void colourFrame(String contact) {
       firstInitial *= (255.0 / 25.0);
       lastInitial *= (255.0 / 25.0);
     }
-
+    
     // Assign the first initial (A - Z) a number from 0 - 255
     else if (firstInitial >= 97 && firstInitial <= 122 && lastInitial >= 97 && lastInitial <= 122) {
       // turn them into numbers from 0 to 25
@@ -177,13 +201,13 @@ void colourFrame(String contact) {
       firstInitial *= (255.0 / 25.0);
       lastInitial *= (255.0 / 25.0);
     } 
-
+    
     // In case the contact's initials aren't found in a-z or A-Z
     else {
       firstInitial = (int)random(255);
       lastInitial = (int)random(255);
     }
-
+    
     frameR = 255 - firstInitial;
     frameG = lastInitial;
     frameB = (firstInitial + lastInitial) / 2;
@@ -193,14 +217,13 @@ void colourFrame(String contact) {
   rectMode(CORNER);
   yMod = 10;
   fill(frameR, frameG, frameB);
-  rect((-1), (-1), width + 1, height + 1);
+  rect(horizontalStart, verticalStart, horizontalLength, verticalLength);
 }
 
 
 // --------------------------------------------------------------------------------------//
 // This function colours the background of the visual based on when the message was sent //
 // --------------------------------------------------------------------------------------//
-
 void colourBackground(int hour) {
 
   // Middle of night (12:00AM - 4:59AM)
@@ -248,14 +271,13 @@ void colourBackground(int hour) {
   // Draw the background of the visual
   rectMode(CORNER);
   fill(backgroundR, backgroundG, backgroundB, 200);
-  rect(0 + xMod, 0 + yMod, width - xMod * 2, height - yMod * 2);
+  rect(horizontalStart + xMod, verticalStart + yMod, horizontalLength - xMod * 2, verticalLength - yMod * 2);
 }
 
 
 // ----------------------------------------------------------------------------------------//
 // This function draws boxes to represent letter frequency in the sent or received message //
 // ----------------------------------------------------------------------------------------//
-
 void drawMessageBoxes(String text) {
 
   letterFrequency(text);
@@ -265,61 +287,61 @@ void drawMessageBoxes(String text) {
 
     rectMode(CORNERS);
     fill(frameR, frameG, frameB, 200);
-    int xVal = 18;
+    int xVal = horizontalStart + 18;
     float xValPlus = 14;
     int multiplier = 20;
 
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (a * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((a * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (b * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((b * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (c * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((c * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (d * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((d * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (e * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((e * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (f * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((f * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (g * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((g * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (h * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((h * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (i * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((i * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (j * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((j * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (k * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((k * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (l * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((l * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (m * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((m * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (n * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((n * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (o * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((o * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (p * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((p * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (q * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((q * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (r * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((r * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (s * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((s * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (t * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((t * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (u * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((u * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (v * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((v * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (w * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((w * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (x * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((x * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (y * multiplier)); 
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((y * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, height - yMod, xVal + xValPlus, (height - yMod) - (z * multiplier));
+    rect(xVal, verticalEnd - yMod, xVal + xValPlus, (verticalEnd - yMod) - constrain((z * multiplier), 0, verticalLength - (yMod * 2)));
   }
 
   // Draw received messages
@@ -327,68 +349,67 @@ void drawMessageBoxes(String text) {
 
     rectMode(CORNERS);
     fill(frameR, frameG, frameB, 200);
-    int xVal = 18;
+    int xVal = horizontalStart + 18;
     float xValPlus = 14;
     int multiplier = 20;
 
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (a * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((a * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (b * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((b * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (c * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((c * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (d * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((d * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (e * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((e * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (f * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((f * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (g * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((g * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (h * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((h * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (i * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((i * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (j * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((j * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (k * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((k * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (l * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((l * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (m * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((m * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (n * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((n * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (o * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((o * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (p * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((p * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (q * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((q * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (r * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((r * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (s * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((s * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (t * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((t * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (u * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((u * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (v * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((v * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (w * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((w * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (x * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((x * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (y * multiplier)); 
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((y * multiplier), 0, verticalLength - (yMod * 2))); 
     xVal += xValPlus;
-    rect(xVal, 0 + yMod, xVal + xValPlus, yMod + (z * multiplier));
+    rect(xVal, verticalStart + yMod, xVal + xValPlus, verticalStart + yMod + constrain((z * multiplier), 0, verticalLength - (yMod * 2)));
   }
 }
 
 // ---------------------------------------------------------------------------------//
 //  This function calculates the most frequently used letter in the passed message  //
 // ---------------------------------------------------------------------------------//
-
 void letterFrequency (String text) {
 
   a = 0;
@@ -561,7 +582,6 @@ void letterFrequency (String text) {
 // ------------------------------------------------------------------------------------------------//
 //  This function generates a note based on the most frequently used letter in the passed message  //
 // ------------------------------------------------------------------------------------------------//
-
 void createTones(String text) {
 
   // Set the attack, sustain, and release of the note
